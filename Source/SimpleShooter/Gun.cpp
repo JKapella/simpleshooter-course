@@ -3,6 +3,9 @@
 
 #include "Gun.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
+#include "Engine/World.h"
 
 
 // Sets default values
@@ -33,6 +36,29 @@ void AGun::Tick(float DeltaTime)
 
 void AGun::PullTrigger() 
 {
-	UE_LOG(LogTemp, Warning, TEXT("BANG BANG!"));
+	UGameplayStatics::SpawnEmitterAttached(MuzzleFlash, Mesh, TEXT("MuzzleFlashSocket"));
+
+	APawn* OwnerPawn = Cast<APawn>(GetOwner());
+	if (OwnerPawn == nullptr) return;
+	AController* OwnerController = OwnerPawn->GetController();
+	if (OwnerController == nullptr) return;
+
+	FVector PlayerViewPointLocation;
+	FRotator PlayerViewPointRotation;
+	OwnerController->GetPlayerViewPoint(PlayerViewPointLocation, PlayerViewPointRotation);
+	
+	FVector End = PlayerViewPointLocation + PlayerViewPointRotation.Vector() * MaxRange;
+
+	FHitResult Hit;
+
+	bool bSuccess = GetWorld()->LineTraceSingleByChannel(Hit, PlayerViewPointLocation, End, ECollisionChannel::ECC_GameTraceChannel1);
+
+	UE_LOG(LogTemp, Warning, TEXT("%b"), bSuccess);
+
+	if (bSuccess) {
+		UE_LOG(LogTemp, Warning, TEXT("HIT: %s"), *Hit.GetActor()->GetName());
+		DrawDebugPoint(GetWorld(), Hit.Location, 20, FColor::Red, true);
+	}
+
 }
 

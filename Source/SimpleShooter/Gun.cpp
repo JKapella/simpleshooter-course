@@ -53,12 +53,13 @@ void AGun::PullTrigger()
 
 	bool bSuccess = GetWorld()->LineTraceSingleByChannel(Hit, PlayerViewPointLocation, End, ECollisionChannel::ECC_GameTraceChannel1);
 
-	UE_LOG(LogTemp, Warning, TEXT("%b"), bSuccess);
-
 	if (bSuccess) {
-		UE_LOG(LogTemp, Warning, TEXT("HIT: %s"), *Hit.GetActor()->GetName());
-		DrawDebugPoint(GetWorld(), Hit.Location, 20, FColor::Red, true);
+		FVector ShotDirection = -PlayerViewPointRotation.Vector();		
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, Hit.Location, ShotDirection.Rotation());
+		if (Hit.GetActor() != nullptr) {
+			FPointDamageEvent DamageEvent(Damage, Hit, ShotDirection, nullptr);
+			Hit.GetActor()->TakeDamage(Damage, DamageEvent, OwnerController, this);
+		}
 	}
-
 }
 
